@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects | Redwan Ahamad Samir</title>
+    <meta name="description" content="Technical projects and implementations by Redwan Ahamad Samir in AI/ML, web development, and mobile applications.">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">RAS</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="research.html" class="nav-link">Research</a></li>
+                <li><a href="projects.html" class="nav-link active">Projects</a></li>
+                <li><a href="blog.html" class="nav-link">Blog</a></li>
+                <li><a href="index.html#contact" class="nav-link">Contact</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <h1 class="page-title">Projects</h1>
+            <p class="page-subtitle">Technical implementations and software development</p>
+        </div>
+    </header>
+
+    <!-- Projects Filter -->
+    <section class="section filter-section">
+        <div class="container">
+            <div class="filter-bar">
+                <button class="filter-btn active" data-filter="all">All Projects</button>
+                <button class="filter-btn" data-filter="ai">AI/ML</button>
+                <button class="filter-btn" data-filter="web">Web</button>
+                <button class="filter-btn" data-filter="mobile">Mobile</button>
+                <button class="filter-btn" data-filter="research">Research</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Grid -->
+    <section class="section projects-section">
+        <div class="container">
+            <div class="projects-grid">
+                <!-- Project 1: CAD Detection -->
+                <article class="project-card" data-category="ai research">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">AI/ML • Research</span>
+                            <h3 class="project-title">Coronary Artery Disease Detection</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        Deep learning system for automated stenosis detection from coronary angiograms. 
+                        Implements CNN with attention mechanisms for medical image analysis in low-resource settings.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">OpenCV</span>
+                        <span class="tech-tag">Medical Imaging</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>Automated arterial blockage detection</li>
+                            <li>Attention-guided feature extraction</li>
+                            <li>Optimized for clinical deployment</li>
+                            <li>Real-time inference capability</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link"><i class="fab fa-github"></i> Code</a>
+                        <a href="research.html#paper1" class="project-link"><i class="fas fa-file-alt"></i> Paper</a>
+                    </div>
+                </article>
+
+                <!-- Project 2: sEMG Wheelchair -->
+                <article class="project-card" data-category="ai iot research">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-wheelchair"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">AI/ML • IoT • Research</span>
+                            <h3 class="project-title">sEMG Wheelchair Control</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        User-independent deep learning framework for assistive wheelchair navigation using 
+                        surface electromyography signals. Real-time gesture recognition without user calibration.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">PyTorch</span>
+                        <span class="tech-tag">Signal Processing</span>
+                        <span class="tech-tag">IoT</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>Multi-channel sEMG processing</li>
+                            <li>User-independent classification</li>
+                            <li>Real-time control interface</li>
+                            <li>Low-cost hardware integration</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link"><i class="fab fa-github"></i> Code</a>
+                        <a href="research.html#paper2" class="project-link"><i class="fas fa-file-alt"></i> Paper</a>
+                    </div>
+                </article>
+
+                <!-- Project 3: HornNet -->
+                <article class="project-card" data-category="ai research">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-bullhorn"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">AI/ML • Research</span>
+                            <h3 class="project-title">HornNet Vehicle Classification</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        Two-tier deep learning framework for real-time vehicle classification from acoustic 
+                        horn signatures. Privacy-preserving traffic monitoring for smart city applications.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">TensorFlow</span>
+                        <span class="tech-tag">Audio Processing</span>
+                        <span class="tech-tag">Edge AI</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>Acoustic event detection</li>
+                            <li>Hierarchical classification</li>
+                            <li>Edge-optimized inference</li>
+                            <li>Privacy-preserving design</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link"><i class="fab fa-github"></i> Code</a>
+                        <a href="research.html#paper3" class="project-link"><i class="fas fa-file-alt"></i> Paper</a>
+                    </div>
+                </article>
+
+                <!-- Project 4: Justice Link BD (NEW) -->
+                <article class="project-card" data-category="ai mobile">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">AI • Mobile • E-Governance</span>
+                            <h3 class="project-title">Justice Link BD</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        A comprehensive digital platform bridging the gap between citizens and law enforcement 
+                        in Bangladesh. Features AI-driven fake report detection using CNN-based sentiment analysis, 
+                        anonymous reporting with encrypted data handling, Emergency SOS with geo-fencing, and 
+                        real-time case tracking for transparency and accountability.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Flutter</span>
+                        <span class="tech-tag">Dart</span>
+                        <span class="tech-tag">CNN</span>
+                        <span class="tech-tag">Firebase</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>Hybrid reporting ecosystem (Citizen App, Police Portal, Admin Panel)</li>
+                            <li>AI-driven validation with credibility scoring</li>
+                            <li>Emergency SOS with 500m geo-fencing alerts</li>
+                            <li>Anonymous reporting with encrypted data handling</li>
+                            <li>Real-time case status tracking</li>
+                            <li>Community timeline with voting system</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link"><i class="fab fa-github"></i> Code</a>
+                        <a href="#" class="project-link"><i class="fas fa-file-alt"></i> Paper</a>
+                    </div>
+                </article>
+
+                <!-- Project 5: AdaLLM (NEW) -->
+                <article class="project-card" data-category="ai research">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">AI • Research • NLP</span>
+                            <h3 class="project-title">AdaLLM: Domain-Adapted Educational AI</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        A domain-adapted AI assistant providing reliable academic guidance for Bangladeshi students. 
+                        Integrates Retrieval-Augmented Generation (RAG) with NCTB textbooks and official university 
+                        sources to reduce hallucinations. Features two-tier LLM architecture, bilingual support 
+                        (Bangla/English), and automated web crawling for study abroad data.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">LLMs</span>
+                        <span class="tech-tag">RAG</span>
+                        <span class="tech-tag">Vector DB</span>
+                        <span class="tech-tag">Firecrawl</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>RAG architecture with verified knowledge sources</li>
+                            <li>Two-tier LLM (lightweight local + powerful fallback)</li>
+                            <li>Bilingual interaction with cited sources</li>
+                            <li>Automated web crawling for university data</li>
+                            <li>Vector database for semantic search</li>
+                            <li>NCTB curriculum-aligned explanations</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="#" class="project-link"><i class="fab fa-github"></i> Code</a>
+                        <a href="research.html" class="project-link"><i class="fas fa-flask"></i> Research</a>
+                    </div>
+                </article>
+
+                <!-- Project 6: Portfolio Website -->
+                <article class="project-card" data-category="web">
+                    <div class="project-header">
+                        <div class="project-icon">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <div class="project-meta">
+                            <span class="project-category">Web Development</span>
+                            <h3 class="project-title">Research Portfolio</h3>
+                        </div>
+                    </div>
+                    <p class="project-description">
+                        This website - a static research portfolio built with modern web standards, 
+                        featuring dark mode design, responsive layout, and semantic HTML structure.
+                    </p>
+                    <div class="project-tech">
+                        <span class="tech-tag">HTML5</span>
+                        <span class="tech-tag">CSS3</span>
+                        <span class="tech-tag">JavaScript</span>
+                        <span class="tech-tag">Responsive</span>
+                    </div>
+                    <div class="project-features">
+                        <ul>
+                            <li>Semantic HTML structure</li>
+                            <li>CSS Grid & Flexbox layouts</li>
+                            <li>Dark mode aesthetic</li>
+                            <li>Mobile-first responsive</li>
+                        </ul>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/samir-cyb" class="project-link"><i class="fab fa-github"></i> Code</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Open Source Section -->
+    <section class="section opensource-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Open Source Contributions</h2>
+                <p class="section-subtitle">Contributions to the AI/ML community</p>
+            </div>
+
+            <div class="opensource-grid">
+                <div class="opensource-card">
+                    <div class="opensource-header">
+                        <i class="fab fa-github"></i>
+                        <h3>Machine Learning Utilities</h3>
+                    </div>
+                    <p>Collection of helper functions and preprocessing pipelines for common ML tasks.</p>
+                    <div class="opensource-stats">
+                        <span><i class="fas fa-star"></i> 12</span>
+                        <span><i class="fas fa-code-branch"></i> 3</span>
+                    </div>
+                    <a href="https://github.com/samir-cyb" class="opensource-link">View on GitHub</a>
+                </div>
+
+                <div class="opensource-card">
+                    <div class="opensource-header">
+                        <i class="fab fa-github"></i>
+                        <h3>Computer Vision Toolkit</h3>
+                    </div>
+                    <p>Pre-trained models and inference scripts for medical imaging analysis.</p>
+                    <div class="opensource-stats">
+                        <span><i class="fas fa-star"></i> 8</span>
+                        <span><i class="fas fa-code-branch"></i> 2</span>
+                    </div>
+                    <a href="https://github.com/samir-cyb" class="opensource-link">View on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <span class="footer-logo">RAS</span>
+                    <p>Redwan Ahamad Samir</p>
+                </div>
+                <div class="footer-links">
+                    <a href="index.html">Home</a>
+                    <a href="about.html">About</a>
+                    <a href="research.html">Research</a>
+                    <a href="projects.html">Projects</a>
+                    <a href="blog.html">Blog</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Redwan Ahamad Samir. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
