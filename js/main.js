@@ -1,161 +1,528 @@
 /**
  * Redwan Ahamad Samir - Research Profile
- * Main JavaScript File
+ * Main JavaScript: navigation, soft motion, filters, citations
  */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all components
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+document.addEventListener('DOMContentLoaded', function () {
     initNavigation();
     initScrollEffects();
     initProjectFilters();
-    initAnimations();
+    initReveal();
+    initSpotlight();
+    initScrollProgress();
+    initCursorGlow();
+    initCounters();
+    initHeroConstellation();
+    initPageTransitions();
     initNewsletterForm();
 });
 
-/**
- * Navigation functionality
- */
+/* --------------------------------------------------------------------------
+   Navigation
+   -------------------------------------------------------------------------- */
 function initNavigation() {
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
     const navLinks = document.querySelectorAll('.nav-link');
     const navbar = document.querySelector('.navbar');
-    
-    // Mobile menu toggle
+
+    function setMenu(open) {
+        if (!hamburger || !navMenu) return;
+        hamburger.classList.toggle('active', open);
+        navMenu.classList.toggle('active', open);
+    }
+
     if (hamburger) {
-        hamburger.addEventListener('click', function() {
-            hamburger.classList.toggle('active');
-            navMenu.classList.toggle('active');
-            
-            // Animate hamburger bars
-            const bars = hamburger.querySelectorAll('.bar');
-            if (hamburger.classList.contains('active')) {
-                bars[0].style.transform = 'rotate(-45deg) translate(-5px, 6px)';
-                bars[1].style.opacity = '0';
-                bars[2].style.transform = 'rotate(45deg) translate(-5px, -6px)';
-            } else {
-                bars[0].style.transform = 'none';
-                bars[1].style.opacity = '1';
-                bars[2].style.transform = 'none';
+        hamburger.setAttribute('role', 'button');
+        hamburger.setAttribute('aria-label', 'Toggle menu');
+        hamburger.setAttribute('tabindex', '0');
+        hamburger.addEventListener('click', function () {
+            setMenu(!hamburger.classList.contains('active'));
+        });
+        hamburger.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setMenu(!hamburger.classList.contains('active'));
             }
         });
     }
-    
-    // Close mobile menu when clicking on a link
-    navLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            navMenu.classList.remove('active');
-            hamburger.classList.remove('active');
-            const bars = hamburger.querySelectorAll('.bar');
-            bars[0].style.transform = 'none';
-            bars[1].style.opacity = '1';
-            bars[2].style.transform = 'none';
-        });
+
+    navLinks.forEach(function (link) {
+        link.addEventListener('click', function () { setMenu(false); });
     });
-    
-    // Navbar background on scroll
-    let lastScroll = 0;
-    window.addEventListener('scroll', function() {
-        const currentScroll = window.pageYOffset;
-        
-        if (currentScroll > 100) {
-            navbar.style.background = 'rgba(10, 10, 15, 0.98)';
-        } else {
-            navbar.style.background = 'rgba(10, 10, 15, 0.95)';
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setMenu(false);
+    });
+
+    document.addEventListener('click', function (e) {
+        if (navMenu && navMenu.classList.contains('active') && !e.target.closest('.nav-container')) {
+            setMenu(false);
         }
-        
-        lastScroll = currentScroll;
     });
+
+    function onScroll() {
+        if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 24);
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
 }
 
-/**
- * Scroll effects and smooth scrolling
- */
+/* --------------------------------------------------------------------------
+   Smooth in-page scrolling
+   -------------------------------------------------------------------------- */
 function initScrollEffects() {
-    // Smooth scroll for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
+    document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (!href || href === '#' || href.length < 2) return;
+
+            let target = null;
+            try { target = document.querySelector(href); } catch (err) { return; }
+            if (!target) return;
+
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                const offsetTop = target.offsetTop - 80; // Account for fixed navbar
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
+            window.scrollTo({
+                top: target.getBoundingClientRect().top + window.scrollY - 90,
+                behavior: prefersReducedMotion ? 'auto' : 'smooth'
+            });
         });
     });
-    
-    // Scroll indicator click
-    const scrollIndicator = document.querySelector('.scroll-indicator');
-    if (scrollIndicator) {
-        scrollIndicator.addEventListener('click', function(e) {
-            e.preventDefault();
-            const featured = document.querySelector('#featured');
-            if (featured) {
-                window.scrollTo({
-                    top: featured.offsetTop - 80,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    }
 }
 
-/**
- * Newsletter form handling (static - no backend)
- */
+/* --------------------------------------------------------------------------
+   Reveal on scroll: soft rise, staggered by position inside the parent
+   -------------------------------------------------------------------------- */
+const REVEAL_SELECTORS = [
+    '.featured-card', '.focus-card', '.update-item', '.publication-card',
+    '.project-card', '.blog-card', '.cert-card', '.skill-category',
+    '.timeline-item', '.overview-card', '.opensource-card', '.info-card',
+    '.profile-photo-card', '.research-project', '.newsletter-box',
+    '.contact-form-wrapper', '.section-header', '.container > .section-title',
+    '.cta-content'
+].join(',');
+
+function initReveal() {
+    const items = Array.prototype.slice.call(document.querySelectorAll(REVEAL_SELECTORS));
+    if (!items.length) return;
+
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
+        items.forEach(function (el) { el.classList.add('is-in', 'is-settled'); });
+        return;
+    }
+
+    // Stagger index: position among revealable siblings, capped so nothing waits long
+    const counters = new Map();
+    items.forEach(function (el) {
+        const parent = el.parentElement;
+        const n = counters.get(parent) || 0;
+        el.style.setProperty('--i', Math.min(n, 5));
+        counters.set(parent, n + 1);
+    });
+
+    const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+            el.classList.add('is-in');
+            observer.unobserve(el);
+            // After the entrance finishes, drop the stagger delay so hover feels instant
+            window.setTimeout(function () { el.classList.add('is-settled'); }, 700);
+        });
+    }, { threshold: 0.06, rootMargin: '0px 0px 6% 0px' });
+
+    items.forEach(function (el) { observer.observe(el); });
+}
+
+/* --------------------------------------------------------------------------
+   Cursor spotlight inside cards
+   -------------------------------------------------------------------------- */
+function initSpotlight() {
+    if (!hasFinePointer || prefersReducedMotion) return;
+
+    const cards = document.querySelectorAll(
+        '.featured-card, .project-card, .publication-card, .cert-card, .info-card, ' +
+        '.opensource-card, .overview-card, .research-project, .blog-card, .timeline-content'
+    );
+
+    cards.forEach(function (card) {
+        let pending = false, px = 0, py = 0;
+        card.addEventListener('pointermove', function (e) {
+            px = e.clientX; py = e.clientY;
+            if (pending) return;
+            pending = true;
+            window.requestAnimationFrame(function () {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mx', (px - rect.left) + 'px');
+                card.style.setProperty('--my', (py - rect.top) + 'px');
+                pending = false;
+            });
+        }, { passive: true });
+    });
+}
+
+/* --------------------------------------------------------------------------
+   Scroll progress bar and parallax variable
+   -------------------------------------------------------------------------- */
+function initScrollProgress() {
+    const bar = document.createElement('div');
+    bar.className = 'scroll-progress';
+    bar.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(bar);
+
+    let ticking = false;
+
+    function update() {
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - doc.clientHeight;
+        const y = window.scrollY;
+        bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(y / max, 1) : 0) + ')';
+        ticking = false;
+    }
+
+    window.addEventListener('scroll', function () {
+        if (!ticking) {
+            ticking = true;
+            window.requestAnimationFrame(update);
+        }
+    }, { passive: true });
+
+    update();
+}
+
+/* --------------------------------------------------------------------------
+   Ambient cursor glow that eases toward the pointer
+   -------------------------------------------------------------------------- */
+function initCursorGlow() {
+    if (!hasFinePointer || prefersReducedMotion) return;
+
+    const glow = document.createElement('div');
+    glow.className = 'cursor-glow';
+    glow.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(glow);
+
+    let tx = window.innerWidth / 2, ty = window.innerHeight / 3;
+    let x = tx, y = ty;
+    let raf = null;
+
+    function loop() {
+        x += (tx - x) * 0.09;
+        y += (ty - y) * 0.09;
+        glow.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+        if (Math.abs(tx - x) > 0.3 || Math.abs(ty - y) > 0.3) {
+            raf = window.requestAnimationFrame(loop);
+        } else {
+            raf = null;
+        }
+    }
+
+    window.addEventListener('pointermove', function (e) {
+        tx = e.clientX;
+        ty = e.clientY;
+        glow.classList.add('on');
+        if (!raf) raf = window.requestAnimationFrame(loop);
+    }, { passive: true });
+
+    document.addEventListener('pointerleave', function () { glow.classList.remove('on'); });
+}
+
+/* --------------------------------------------------------------------------
+   Hero stat counters: count up once when they scroll into view
+   -------------------------------------------------------------------------- */
+function initCounters() {
+    const nums = document.querySelectorAll('.stat-number');
+    if (!nums.length || prefersReducedMotion || !('IntersectionObserver' in window)) return;
+
+    function run(el) {
+        const raw = el.textContent.trim();
+        const match = raw.match(/^(\d+)(.*)$/);
+        if (!match) return;
+        const target = parseInt(match[1], 10);
+        const suffix = match[2];
+        const duration = 900;
+        const start = performance.now();
+        el.textContent = '0' + suffix;
+
+        function frame(now) {
+            const t = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(target * eased) + suffix;
+            if (t < 1) window.requestAnimationFrame(frame);
+        }
+        window.requestAnimationFrame(frame);
+    }
+
+    const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                observer.unobserve(entry.target);
+                // Wait for the hero entrance so the count reads as part of it
+                window.setTimeout(function () { run(entry.target); }, 450);
+            }
+        });
+    }, { threshold: 0.6 });
+
+    nums.forEach(function (n) { observer.observe(n); });
+}
+
+/* --------------------------------------------------------------------------
+   Hero constellation: slow drifting nodes that lean toward the pointer
+   -------------------------------------------------------------------------- */
+function initHeroConstellation() {
+    const hero = document.querySelector('.hero');
+    if (!hero || prefersReducedMotion) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'hero-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
+    hero.insertBefore(canvas, hero.firstChild);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let w = 0, h = 0, dpr = 1;
+    let nodes = [];
+    const pointer = { x: -9999, y: -9999 };
+    let running = true;
+    let raf = null;
+
+    function resize() {
+        dpr = 1;
+        const rect = hero.getBoundingClientRect();
+        w = rect.width;
+        h = rect.height;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const count = Math.max(22, Math.min(40, Math.round((w * h) / 34000)));
+        nodes = [];
+        for (let i = 0; i < count; i++) {
+            nodes.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.22,
+                vy: (Math.random() - 0.5) * 0.22,
+                r: Math.random() * 1.3 + 0.6
+            });
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+        const link = Math.min(150, w * 0.16);
+        // Batch links into 4 opacity buckets: 4 strokes per frame instead of one per link
+        const buckets = [[], [], [], []];
+
+        for (let i = 0; i < nodes.length; i++) {
+            const a = nodes[i];
+
+            // Drift, wrap at edges
+            a.x += a.vx;
+            a.y += a.vy;
+            if (a.x < -20) a.x = w + 20;
+            if (a.x > w + 20) a.x = -20;
+            if (a.y < -20) a.y = h + 20;
+            if (a.y > h + 20) a.y = -20;
+
+            // Gentle attraction toward the pointer
+            const dx = pointer.x - a.x;
+            const dy = pointer.y - a.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 < 32000) {
+                a.x += dx * 0.0016;
+                a.y += dy * 0.0016;
+            }
+
+            for (let j = i + 1; j < nodes.length; j++) {
+                const b = nodes[j];
+                const ddx = a.x - b.x;
+                const ddy = a.y - b.y;
+                const dist = Math.sqrt(ddx * ddx + ddy * ddy);
+                if (dist < link) {
+                    buckets[Math.min(3, Math.floor((1 - dist / link) * 4))].push(a.x, a.y, b.x, b.y);
+                }
+            }
+        }
+
+        ctx.lineWidth = 0.7;
+        for (let k = 0; k < 4; k++) {
+            const seg = buckets[k];
+            if (!seg.length) continue;
+            ctx.strokeStyle = 'rgba(217,191,140,' + (((k + 0.5) / 4) * 0.22).toFixed(3) + ')';
+            ctx.beginPath();
+            for (let s = 0; s < seg.length; s += 4) {
+                ctx.moveTo(seg[s], seg[s + 1]);
+                ctx.lineTo(seg[s + 2], seg[s + 3]);
+            }
+            ctx.stroke();
+        }
+
+        ctx.fillStyle = 'rgba(236,214,166,0.7)';
+        ctx.beginPath();
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            ctx.moveTo(n.x + n.r, n.y);
+            ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+    }
+
+    let last = 0;
+    function loop(now) {
+        if (!running) { raf = null; return; }
+        // Cap at ~30fps: the drift is slow, and this halves the work
+        if (now - last >= 32) { last = now; draw(); }
+        raf = window.requestAnimationFrame(loop);
+    }
+
+    function start() {
+        if (!raf && running) raf = window.requestAnimationFrame(loop);
+    }
+
+    resize();
+    start();
+
+    let resizeTimer = null;
+    window.addEventListener('resize', function () {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(resize, 150);
+    });
+
+    hero.addEventListener('pointermove', function (e) {
+        const rect = hero.getBoundingClientRect();
+        pointer.x = e.clientX - rect.left;
+        pointer.y = e.clientY - rect.top;
+    }, { passive: true });
+
+    hero.addEventListener('pointerleave', function () {
+        pointer.x = pointer.y = -9999;
+    });
+
+    // Pause when the hero is off screen or the tab is hidden
+    if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (entries) {
+            running = entries[0].isIntersecting && !document.hidden;
+            if (running) start();
+        }).observe(hero);
+    }
+    document.addEventListener('visibilitychange', function () {
+        running = !document.hidden;
+        if (running) start();
+    });
+}
+
+/* --------------------------------------------------------------------------
+   Soft fade when leaving the page through an internal link
+   -------------------------------------------------------------------------- */
+function initPageTransitions() {
+    if (prefersReducedMotion) return;
+
+    document.querySelectorAll('a[href]').forEach(function (a) {
+        const href = a.getAttribute('href');
+        if (!href || href.charAt(0) === '#') return;
+        if (a.target === '_blank' || a.hasAttribute('download')) return;
+        if (/^(mailto:|tel:|https?:)/i.test(href)) return;
+
+        a.addEventListener('click', function (e) {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+            const url = new URL(a.href, window.location.href);
+            // Same-page hash links keep native behaviour
+            if (url.pathname === window.location.pathname && url.hash) return;
+            e.preventDefault();
+            document.body.classList.add('is-leaving');
+            window.setTimeout(function () { window.location.href = a.href; }, 220);
+        });
+    });
+
+    // Restore the page when it comes back from the bfcache
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) document.body.classList.remove('is-leaving');
+    });
+}
+
+/* --------------------------------------------------------------------------
+   Newsletter form (static, no backend)
+   -------------------------------------------------------------------------- */
 function initNewsletterForm() {
-    const newsletterForm = document.querySelector('.newsletter-form');
-    if (newsletterForm) {
-        newsletterForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = this.querySelector('input[type="email"]').value.trim();
-            
-            if (!email) {
-                showNotification('Please enter your email', 'error');
-                return;
-            }
-            
-            showNotification('Thank you for subscribing!', 'success');
-            this.reset();
-        });
-    }
+    const form = document.querySelector('.newsletter-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const email = this.querySelector('input[type="email"]').value.trim();
+        if (!email) {
+            showNotification('Please enter your email', 'error');
+            return;
+        }
+        showNotification('Thank you for subscribing!', 'success');
+        this.reset();
+    });
 }
 
-/**
- * Project filtering functionality
- */
+/* --------------------------------------------------------------------------
+   Project filters with a sliding indicator
+   -------------------------------------------------------------------------- */
 function initProjectFilters() {
+    const bar = document.querySelector('.filter-bar');
     const filterBtns = document.querySelectorAll('.filter-btn');
     const projectCards = document.querySelectorAll('.project-card');
-    
-    if (filterBtns.length === 0) return;
-    
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all buttons
-            filterBtns.forEach(b => b.classList.remove('active'));
-            // Add active class to clicked button
+    if (!bar || filterBtns.length === 0) return;
+
+    const indicator = document.createElement('span');
+    indicator.className = 'filter-indicator';
+    bar.insertBefore(indicator, bar.firstChild);
+
+    function moveIndicator(btn) {
+        indicator.style.width = btn.offsetWidth + 'px';
+        indicator.style.transform = 'translateX(' + btn.offsetLeft + 'px)';
+    }
+
+    function placeInitial() {
+        const active = document.querySelector('.filter-btn.active') || filterBtns[0];
+        bar.classList.add('has-indicator');
+        moveIndicator(active);
+    }
+
+    placeInitial();
+    window.addEventListener('resize', function () {
+        const active = document.querySelector('.filter-btn.active');
+        if (active) moveIndicator(active);
+    });
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () {
+            const active = document.querySelector('.filter-btn.active');
+            if (active) moveIndicator(active);
+        });
+    }
+
+    filterBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            filterBtns.forEach(function (b) { b.classList.remove('active'); });
             this.classList.add('active');
-            
+            moveIndicator(this);
+
             const filterValue = this.getAttribute('data-filter');
-            
-            projectCards.forEach(card => {
-                const categories = card.getAttribute('data-category');
-                
-                if (filterValue === 'all' || categories.includes(filterValue)) {
-                    card.style.display = 'block';
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, 50);
-                } else {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(20px)';
-                    setTimeout(() => {
-                        card.style.display = 'none';
+
+            projectCards.forEach(function (card) {
+                const categories = card.getAttribute('data-category') || '';
+                const show = filterValue === 'all' || categories.indexOf(filterValue) !== -1;
+
+                if (show) {
+                    if (card.classList.contains('is-hidden')) {
+                        card.classList.remove('is-hidden');
+                        card.classList.add('is-in', 'is-settled', 'is-filtering-out');
+                        // Force a frame so the fade-in can run
+                        void card.offsetWidth;
+                        card.classList.remove('is-filtering-out');
+                    }
+                } else if (!card.classList.contains('is-hidden')) {
+                    card.classList.add('is-filtering-out');
+                    window.setTimeout(function () {
+                        card.classList.add('is-hidden');
                     }, 300);
                 }
             });
@@ -163,128 +530,67 @@ function initProjectFilters() {
     });
 }
 
-/**
- * Scroll animations using Intersection Observer
- */
-function initAnimations() {
-    const observerOptions = {
-        root: null,
-        rootMargin: '0px',
-        threshold: 0.1
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animated');
-                observer.unobserve(entry.target);
-            }
-        });
-    }, observerOptions);
-    
-    // Observe elements for animation
-    const animateElements = document.querySelectorAll(
-        '.featured-card, .focus-card, .update-item, .publication-card, ' +
-        '.project-card, .blog-card, .cert-card, .skill-category, .timeline-item'
-    );
-    
-    animateElements.forEach((el, index) => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(30px)';
-        el.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
-        observer.observe(el);
-    });
-    
-    // Add animated class styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .animated {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-    `;
-    document.head.appendChild(style);
-}
+/* --------------------------------------------------------------------------
+   Notifications
+   -------------------------------------------------------------------------- */
+function showNotification(message, type) {
+    type = type || 'info';
 
-/**
- * Notification system
- */
-function showNotification(message, type = 'info') {
-    // Remove existing notifications
     const existing = document.querySelector('.notification');
     if (existing) existing.remove();
-    
-    // Create notification element
+
+    const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
     const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
-            <span>${message}</span>
-        </div>
-    `;
-    
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 24px;
-        background: ${type === 'success' ? 'rgba(91, 141, 239, 0.95)' : type === 'error' ? 'rgba(239, 91, 91, 0.95)' : 'rgba(124, 58, 237, 0.95)'};
-        color: white;
-        padding: 16px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        z-index: 10000;
-        transform: translateX(400px);
-        transition: transform 0.3s ease;
-        max-width: 400px;
-    `;
-    
+    notification.className = 'notification notification-' + type;
+    notification.setAttribute('role', 'status');
+
+    const content = document.createElement('div');
+    content.className = 'notification-content';
+    const i = document.createElement('i');
+    i.className = 'fas ' + icon;
+    const span = document.createElement('span');
+    span.textContent = message;
+    content.appendChild(i);
+    content.appendChild(span);
+    notification.appendChild(content);
+
     document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after 4 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(400px)';
-        setTimeout(() => notification.remove(), 300);
+
+    window.setTimeout(function () { notification.classList.add('show'); }, 60);
+    window.setTimeout(function () {
+        notification.classList.remove('show');
+        window.setTimeout(function () { notification.remove(); }, 500);
     }, 4000);
 }
 
-/**
- * Copy citation to clipboard
- */
+/* --------------------------------------------------------------------------
+   Citations
+   -------------------------------------------------------------------------- */
 function copyCitation(paperId) {
     const citations = {
         paper1: `Rabby, F., Rahman, M., Rajdeep, Hossain, H., Samir, R. A., & Sfarhaan. (2025). Early-Stage Coronary Artery Disease Prediction Using Coronary Angiogram for Stenosis Detection in Low-Resource Settings. International Conference on Big Data, IoT and Machine Learning (BMI 2025).`,
-        
+
         paper2: `Rabby, F., Rajdeep, Rahman, M., Hossain, H., & Samir, R. A. (2025). Scalable sEMG-Based User-Independent Deep Learning Framework for Assistive Wheelchair Control. International Conference on Big Data, IoT and Machine Learning (BMI 2025).`,
-        
-        paper3: `Alamgir, F. M., Samir, R. A., Arafat, S. E., Rahman, S., & Rahman, A. (2026). HornNet: A Two-Tier Deep Learning Framework for Real-Time Vehicle Classification from Acoustic Horn Signatures in Urban Environments. 2026 IEEE 2nd International Conference on Quantum Photonics, Artificial Intelligence & Networking (QPAIN).`
+
+        paper3: `Alamgir, F. M., Samir, R. A., Arafat, S. E., Rahman, S., & Rahman, A. (2026). HornNet: A Two-Tier Deep Learning Framework for Real-Time Vehicle Classification from Acoustic Horn Signatures in Urban Environments. 2026 IEEE 2nd International Conference on Quantum Photonics, Artificial Intelligence & Networking (QPAIN).`,
+
+        paper4: `Rahman, S., Islam, R., Samir, R. A., Hossain, M. K., Faruk, M. O., & Kibria, R. (2026). AdaLLM: A Subject-Adaptive RAG Framework Designed for the Question Answering Process of NCTB’s Class-8 Science & BGS Subjects. 2nd International Conference on Advances in Computing, Communication, Electrical, and Smart Systems (iCACCESS 2026).`
     };
-    
+
     const citation = citations[paperId];
-    if (citation) {
-        // Try modern clipboard API first
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(citation).then(() => {
-                showNotification('Citation copied to clipboard!', 'success');
-            }).catch(() => {
-                fallbackCopyTextToClipboard(citation);
-            });
-        } else {
-            // Fallback for older browsers or non-secure contexts
+    if (!citation) return;
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(citation).then(function () {
+            showNotification('Citation copied to clipboard!', 'success');
+        }).catch(function () {
             fallbackCopyTextToClipboard(citation);
-        }
+        });
+    } else {
+        fallbackCopyTextToClipboard(citation);
     }
 }
 
-/**
- * Fallback copy function for older browsers
- */
 function fallbackCopyTextToClipboard(text) {
     const textArea = document.createElement('textarea');
     textArea.value = text;
@@ -292,99 +598,21 @@ function fallbackCopyTextToClipboard(text) {
     textArea.style.left = '0';
     textArea.style.position = 'fixed';
     textArea.style.opacity = '0';
-    
+
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
+
     try {
         const successful = document.execCommand('copy');
-        if (successful) {
-            showNotification('Citation copied to clipboard!', 'success');
-        } else {
-            showNotification('Failed to copy citation', 'error');
-        }
+        showNotification(successful ? 'Citation copied to clipboard!' : 'Failed to copy citation', successful ? 'success' : 'error');
     } catch (err) {
         showNotification('Failed to copy citation', 'error');
     }
-    
+
     document.body.removeChild(textArea);
 }
 
-/**
- * Typing effect for hero section (optional enhancement)
- */
-function initTypingEffect() {
-    const element = document.querySelector('.typing-text');
-    if (!element) return;
-    
-    const text = element.getAttribute('data-text');
-    const speed = 100;
-    let i = 0;
-    
-    function type() {
-        if (i < text.length) {
-            element.textContent += text.charAt(i);
-            i++;
-            setTimeout(type, speed);
-        }
-    }
-    
-    type();
-}
-
-/**
- * Reading progress indicator
- */
-function initReadingProgress() {
-    const progressBar = document.createElement('div');
-    progressBar.className = 'reading-progress';
-    progressBar.style.cssText = `
-        position: fixed;
-        top: 70px;
-        left: 0;
-        width: 0%;
-        height: 3px;
-        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-        z-index: 999;
-        transition: width 0.1s;
-    `;
-    document.body.appendChild(progressBar);
-    
-    window.addEventListener('scroll', () => {
-        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = (winScroll / height) * 100;
-        progressBar.style.width = scrolled + '%';
-    });
-}
-
-// Initialize reading progress on blog and research pages
-if (document.body.classList.contains('page-blog') || document.body.classList.contains('page-research')) {
-    initReadingProgress();
-}
-
-/**
- * Dark mode toggle (if needed in future)
- */
-function initDarkMode() {
-    const toggle = document.querySelector('.dark-mode-toggle');
-    if (!toggle) return;
-    
-    // Check for saved preference
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode === 'false') {
-        document.body.classList.add('light-mode');
-    }
-    
-    toggle.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        const isDark = !document.body.classList.contains('light-mode');
-        localStorage.setItem('darkMode', isDark);
-    });
-}
-
 // Console greeting
-console.log('%cRedwan Ahamad Samir', 'font-size: 24px; font-weight: bold; color: #5b8def;');
-console.log('%cAI Researcher & Developer', 'font-size: 14px; color: #a0a0b0;');
-console.log('%cWelcome to my research profile!', 'font-size: 12px; color: #6a6a7a;');
+console.log('%cRedwan Ahamad Samir', 'font-size: 24px; font-weight: bold; color: #d9bf8c;');
+console.log('%cAI Researcher & Developer', 'font-size: 14px; color: #aeab9f;');

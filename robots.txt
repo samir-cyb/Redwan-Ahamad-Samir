@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://samir-cyb.github.io/Redwan-Ahamad-Samir/sitemap.xml
